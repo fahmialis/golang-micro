@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    ports:
+      - "4001:4001"
+    environment:
+      - PORT=4001
+    networks:
+      - golang-net
+
+  gateway-service:
+    build:
+      context: ./gateway-service
+    container_name: gateway-service
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - USER_SERVICE_URL=http://user-service:4001
+    depends_on:
+      - user-service
+    networks:
+      - golang-net
+
+networks:
+  golang-net:
+    driver: bridge
