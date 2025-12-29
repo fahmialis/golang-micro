@@ -15,7 +15,6 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 }
 
 func (s *UserService) GetUsers(ctx context.Context) ([]repository.User, error) {
-
 	data, err := s.repo.FindAll(ctx)
 
 	if err != nil {
