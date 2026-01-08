@@ -10,6 +10,7 @@ import (
 
 func User() http.Handler {
 	target := os.Getenv("USER_SERVICE_URL")
+
 	if target == "" {
 		target = "http://localhost:4001"
 	}
