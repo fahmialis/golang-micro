@@ -3,35 +3,44 @@ package repository
 import (
 	"context"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type User struct {
-	ID    string `bson:"_id,omitempty" json:"id"`
-	Name  string `bson:"name" json:"name"`
-	Email string `bson:"email" json:"email"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 type UserRepository struct {
-	collection *mongo.Collection
+	db *pgxpool.Pool
 }
 
-func NewUserRepository(db *mongo.Database) *UserRepository {
-	return &UserRepository{
-		collection: db.Collection("users"),
-	}
+func NewUserRepository(db *pgxpool.Pool) *UserRepository {
+	return &UserRepository{db: db}
 }
 
 func (r *UserRepository) FindAll(ctx context.Context) ([]User, error) {
-	cursor, err := r.collection.Find(ctx, bson.M{})
+	rows, err := r.db.Query(ctx, `
+		SELECT id, name, email
+		FROM local_profile
+	`)
 	if err != nil {
 		return nil, err
 	}
-	defer cursor.Close(ctx)
+	defer rows.Close()
 
 	var users []User
-	if err := cursor.All(ctx, &users); err != nil {
+
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 

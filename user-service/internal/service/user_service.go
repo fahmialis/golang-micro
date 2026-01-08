@@ -3,23 +3,33 @@ package service
 import (
 	"context"
 	"fmt"
-	"user-service/internal/repository"
+	db "user-service/internal/db/gen"
+
+	"github.com/google/uuid"
 )
 
 type UserService struct {
-	repo *repository.UserRepository
+	q *db.Queries
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(q *db.Queries) *UserService {
+	return &UserService{q: q}
 }
 
-func (s *UserService) GetUsers(ctx context.Context) ([]repository.User, error) {
-	data, err := s.repo.FindAll(ctx)
-
+func (s *UserService) GetUsers(ctx context.Context) ([]db.LocalProfile, error) {
+	users, err := s.q.ListLocalProfiles(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("no users found")
+		return nil, fmt.Errorf("failed to fetch users: %w", err)
 	}
+	return users, nil
+}
 
-	return data, nil
+func (s *UserService) GetUserByID(ctx context.Context, id uuid.UUID) (*db.LocalProfile, error) {
+
+	fmt.Println("id", id)
+	user, err := s.q.GetLocalProfileByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch user by ID: %w", err)
+	}
+	return &user, nil
 }

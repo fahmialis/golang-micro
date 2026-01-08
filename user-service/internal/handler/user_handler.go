@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+
 	"user-service/internal/service"
 )
 
@@ -26,6 +30,26 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
-func (h *UserHandler) Health(w http.ResponseWriter, _ *http.Request) {
-	w.Write([]byte("user service is running"))
+func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	// ✅ chi path param
+	idStr := chi.URLParam(r, "id")
+
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		http.Error(w, "invalid uuid", http.StatusBadRequest)
+		return
+	}
+
+	user, err := h.service.GetUserByID(r.Context(), id)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			http.Error(w, "user not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
 }

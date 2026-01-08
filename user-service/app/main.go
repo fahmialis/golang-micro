@@ -6,22 +6,22 @@ import (
 	"os"
 
 	"user-service/internal/config"
-	"user-service/internal/repository"
+	db "user-service/internal/db/gen"
 	"user-service/internal/router"
 	"user-service/internal/service"
 )
 
 func main() {
-	mongoURI := os.Getenv("MONGO_URI")
-	if mongoURI == "" {
-		mongoURI = "mongodb://localhost:55000"
+	postgresDSN := os.Getenv("POSTGRES_DSN")
+	if postgresDSN == "" {
+		postgresDSN = "postgres://admin:admin@localhost:6000/postgres?sslmode=disable"
 	}
 
-	client := config.NewMongoClient(mongoURI)
-	db := client.Database("local_mongo_db")
+	dbPool := config.NewPostgresPool(postgresDSN)
+	defer dbPool.Close()
 
-	userRepo := repository.NewUserRepository(db)
-	userService := service.NewUserService(userRepo)
+	queries := db.New(dbPool)
+	userService := service.NewUserService(queries)
 
 	handler := router.New(userService)
 
