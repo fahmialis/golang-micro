@@ -31,7 +31,6 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
-	// ✅ chi path param
 	idStr := chi.URLParam(r, "id")
 
 	id, err := uuid.Parse(idStr)
